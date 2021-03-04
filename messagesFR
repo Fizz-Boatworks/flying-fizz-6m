@@ -1,0 +1,54 @@
+Ce bateau peut être utilisé par tout le monde
+Seul le propriétaire peut naviguer sur ce bateau
+Caméra passée en position 
+Utilisation du mode fun
+Utilisation du mode novice
+Utilisation du mode competition
+Utilisation du mode expert
+L'identifiant du bateau est 
+Le barreur contrôle la grande voile
+L'équipier 1 contrôle la grande voile
+L'équipier 2 contrôle la grande voile
+L'équipier 3 contrôle la grande voile
+Le barreur contrôle le foc
+L'équipier 1 contrôle le foc
+L'équipier 2 contrôle le foc
+L'équipier 3 contrôle le foc
+Le barreur règle le foc
+L'équipier 1 règle le foc
+L'équipier 2 règle le foc
+L'équipier 3 règle le foc
+Le barreur contrôle le gennaker
+L'équipier 1 contrôle le gennaker
+L'équipier 2 contrôle le gennaker
+L'équipier 3 contrôle le gennaker
+La dernière version va vous être délivrée rapidement
+Nouvelles versions demandées au serveur
+Le bateau est passé en mode fantôme par 
+Le bateau est passé en mode non-fantôme par 
+Position d'amarrage enregistrée
+L'amarrage est autorisée uniquement dans la région d'origine
+La position d'amarrage n'est pas encore mémorisée
+La vue panoramique ne peut pas être utilisée tout le temps et est temporairement désactivée
+Application des textures à partir de la note
+Note introuvable
+Grande voile en position ouverte
+Grande voile en position plate
+Grande voile en position intermédiaire
+Grande voile en position arrondie
+Misaine en position ouverte
+Misaine  en position plate
+Misaine  en position intermédiaire
+Misaine  en position arrondie
+Abaisser le gennaker ...
+Hisser le gennaker ...
+Hisser le gennaker 2 ... (pas encore implémenté sur le flying Fizz)
+Hisser le gennaker 3 ... (pas encore implémenté sur le flying Fizz)
+Hisser le gennaker 4 ... (pas encore implémenté sur le flying Fizz)
+Flying Fizz
+hisser/abaisser = début/fin de navigation
+up/down key = réglage des voiles
+shift-up/ shift-down = position/amure
+PgUp/PgDn = contrôle les voiles
+Attention le Gennaker  est en vrille !
+Entrer "gennaker" pour envoyer ou affaler le gennaker

@@ -1,18 +1,17 @@
-#define USE_LAZY_LISTS
-
 string numbersUUID = "0f31aea7-a4e6-d672-812d-4d4105002a6b";
-
-
-string selectedUSB ="http://maps.secondlife.com/secondlife/Sugar%20Reef/73/178/21,ORANGE CCW";
-string selectedUSBRegionName;
-string selectedUSBDescription;
-vector selectedUSBRegionCorner;
-vector selectedUSBVector;
-
+string selectedWaypoint ="http://maps.secondlife.com/secondlife/Sugar%20Reef/73/178/21,ORANGE CCW";
+string selectedRegionName;
+string selectedDescription;
+vector selectedRegionCorner;
+vector selectedVector;
+integer selectedRange;
 
 float textOpacity = 1;
 
 integer defaultChannelNumber = -29000;
+integer rlvChannelNumber = 29000;
+integer rlvListener;
+integer rlvEnabled = FALSE;
 integer defaultListenHandler;
 integer rootLink;
 integer ktsLink;
@@ -35,15 +34,10 @@ list numbers = [
 ];
 
 vector textColor = <.24, .61, .98>;
-
-
 vector currentWaypoint;
 vector prevWaypoint;
 vector nextWaypoint;
 key gpsQuery = NULL_KEY;
-
-
-
 
 GetHUDLinks()
 {
@@ -123,8 +117,8 @@ string ParseUSBRegionName(string regionName)
 string CalculateBearing(string param)
 {
     vector globalPosition = (vector)param;
-    selectedUSBVector.z = globalPosition.z;
-    vector waypoint = selectedUSBRegionCorner + selectedUSBVector;
+    selectedVector.z = globalPosition.z;
+    vector waypoint = selectedRegionCorner + selectedVector;
     integer brg = llRound( llAtan2(globalPosition.x - waypoint.x, globalPosition.y - waypoint.y) * 180.0 / PI + 180.0 ) % 360;
     return (string)brg;
 }
@@ -132,8 +126,8 @@ string CalculateBearing(string param)
 string CalculateRange(string param)
 {
     vector globalPosition = (vector)param;
-    selectedUSBVector.z = globalPosition.z;
-    vector waypoint = selectedUSBRegionCorner + selectedUSBVector;
+    selectedVector.z = globalPosition.z;
+    vector waypoint = selectedRegionCorner + selectedVector;
     integer range = (integer)llVecMag(globalPosition - waypoint);
     return (string)range;
 }
@@ -151,23 +145,20 @@ default
     {
         GetHUDLinks();
         defaultListenHandler = llListen(defaultChannelNumber, "", "", "");
-        
-        if (llSubStringIndex(selectedUSB, "maps.secondlife.com") > 0) {
-            list waypoint = llParseStringKeepNulls(selectedUSB, ["/", ","], []);
-            selectedUSBVector = <(float)waypoint[5], (float)waypoint[6], (float)waypoint[7]>;
-            selectedUSBRegionName = ParseUSBRegionName((string)waypoint[4]);
-            selectedUSBDescription = (string)waypoint[8];
-            gpsQuery = llRequestSimulatorData(selectedUSBRegionName, DATA_SIM_POS);
-        }
+        rlvListener = llListen(rlvChannelNumber, "", "", "");
+        llOwnerSay("@version=" + (string)rlvChannelNumber);
     }
     
     on_rez(integer param)
     {
         llSetText("", textColor, textOpacity);
+        llOwnerSay("@version=" + (string)rlvChannelNumber);
     }
     
     listen(integer channel, string name, key id, string message) 
     {
+        if (channel == rlvChannelNumber) rlvEnabled = TRUE;
+        
         if (channel == defaultChannelNumber)
         {
             list params = llParseStringKeepNulls(message, [","], []);
@@ -187,7 +178,7 @@ default
                 SetDigits(aws, awsLink, 1);
                 SetDigits(brg, brgLink, 0);
 
-                llSetText(selectedUSBRegionName + " [ " + selectedUSBDescription + " ] \n" +
+                llSetText(selectedRegionName + " [ " + selectedDescription + " ] \n" +
                     range + "m | turn: " + btt,
                     textColor,
                     textOpacity
@@ -203,11 +194,38 @@ default
         }    
     }
 
+    link_message(integer sender_num, integer num, string message, key id)
+    {
+        if (llSubStringIndex(message, "maps.secondlife.com") > 0) {
+            list waypoint = llParseStringKeepNulls(message, ["/", ","], []);
+            selectedVector = <(float)waypoint[5], (float)waypoint[6], (float)waypoint[7]>;
+            selectedRegionName = ParseUSBRegionName((string)waypoint[4]);
+            selectedDescription = (string)waypoint[8];
+            selectedRange = (integer)num;
+            gpsQuery = llRequestSimulatorData(selectedRegionName, DATA_SIM_POS);
+        }
+    }
+
     dataserver(key queryid, string data)
     {
         if (queryid == gpsQuery)
         {
-            selectedUSBRegionCorner = (vector)data;
+            selectedRegionCorner = (vector)data;
+            if (rlvEnabled)
+            {
+                llOwnerSay("@showworldmap=n");
+                llMapDestination(selectedRegionName, selectedVector, ZERO_VECTOR);
+                llOwnerSay("@showworldmap=y");
+            }
+        }
+    }
+
+    changed(integer change) 
+    {
+        if (change && CHANGED_INVENTORY) 
+        {
+            llSleep(0.5);
+            llResetScript(); 
         }
     }
 }

@@ -1,0 +1,60 @@
+This boat is unlocked and can be sailed by anyone
+This boat is now locked and can only be sailed by the owner
+Camera changed to position
+Switched to fun mode
+Switched to novice mode
+Switched to competition mode
+Switched to expert mode
+Boat id set to
+Helmsman controls the mainsail trim
+Crew 1 controls the mainsail trim
+Crew 2 controls the mainsail trim
+Crew 3 controls the mainsail trim
+Helmsman controls the jibsheet
+Crew 1 controls the jibsheet
+Crew 2 controls the jibsheet
+Crew 3 controls the jibsheet
+Helmsman controls the jib trim
+Crew 1 controls the jib trim
+Crew 2 controls the jib trim
+Crew 3 controls the jib trim
+Helmsman controls the gennaker
+Crew 1 controls the gennaker
+Crew 2 controls the gennaker
+Crew 3 controls the gennaker
+The latest version will be delivered to you shortly.
+New versions will be requested from server key 
+Boat is made phantom by
+Boat is made non-phantom by
+Dock position registered
+Docking is only possible in the original region
+Dock position is not set yet
+Panorama view can not be used all the time and is temporarily disabled
+Applying textures from notecard
+Can't find notecard
+Mainsail trimmed to opened
+Mainsail trimmed to flat
+Mainsail trimmed to medium
+Mainsail trimmed to round
+Foresail trimmed to opened
+Foresail trimmed to flat
+Foresail trimmed to medium
+Foresail trimmed to round
+Dropping gennaker...
+Raising gennaker...
+Raising gennaker 2... (not implemented in flying fizz)
+Raising gennaker 3... (not implemented in flying fizz)
+Raising gennaker 4... (not implemented in flying fizz)
+Flying Fizz
+raise/lower = start/stop sailing
+up/down key = sheet control
+shift-left/ shift-right = hike/tack
+pgup/pgdn = control sail trim
+the gennaker collapsed!
+type "gennaker" to raise or drop the gennaker
+Your personal Fizz Key is not found.
+Put your Fizz Key in the contents of this boat
+Sorry, your demo period has expired
+Your scripts did not pass the internal script check
+shout relay off
+shout relay on

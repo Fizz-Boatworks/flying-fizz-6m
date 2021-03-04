@@ -1,15 +1,12 @@
-key userKey;
-
-integer gpsState = FALSE;
-integer boatReceiver;
-integer defaultRange = 10;
-integer selectedRange = 10;
+key USER_KEY;
+integer GPS_STATE = FALSE;
+integer BOAT_RECEIVER;
+integer DEFAULT_RANGE = 10;
 
 // lists
-list mainMenuList = ["power on/off"];
-list mainMenuList2 = ["set waypoint", "select route", "set range"];
-list rangeMenuList = ["+10", "-10", "default (10m)", "↩️ back"];
-list selectedRoute;
+list MAIN_MENU_LIST = ["power on/off"];
+list MAIN_MENU_LIST2 = ["set waypoint", "select route", "set range"];
+list RANGE_MENU_LIST = ["+10", "-10", "default (10m)", "↩️ back"];
 list inventoryList;
 
 //listener
@@ -20,6 +17,11 @@ integer mainMenuChannel;
 integer waypointMenuChannel;
 integer routeMenuChannel;
 integer rangeMenuChannel;
+
+//selected
+integer selectedRange = DEFAULT_RANGE;
+list selectedRoute;
+integer selectedWaypoint;
 
 menu(key id, integer channel, string title, list buttons) 
 {
@@ -32,8 +34,8 @@ menu(key id, integer channel, string title, list buttons)
 mainMenu(key id)
 {
     mainMenuChannel = randomNumber();
-    list thisList = mainMenuList;
-    if (gpsState) thisList = mainMenuList + mainMenuList2;
+    list thisList = MAIN_MENU_LIST;
+    if (GPS_STATE) thisList = MAIN_MENU_LIST + MAIN_MENU_LIST2;
     menu
     (
         id,
@@ -70,7 +72,7 @@ handleWaypointMenu(key id)
     waypointMenuChannel = randomNumber();
     llListenRemove(listener);
     listener = llListen(waypointMenuChannel, "", id, "");
-    llTextBox(userKey, "Please enter a waypoint in USB format!", waypointMenuChannel);
+    llTextBox(USER_KEY, "Please enter a waypoint in USB format!", waypointMenuChannel);
 }
 
 handleRouteMenu(key id)
@@ -106,40 +108,42 @@ handleRangeMenu(key id)
         id,
         rangeMenuChannel, 
         "Select an option...",
-        rangeMenuList 
+        RANGE_MENU_LIST 
     );
 }
 
 onWaypointSet(string message)
 {
-    llOwnerSay(message);
-    // message linked waypoint & range
+    if (llSubStringIndex(message, "maps.secondlife.com") > 0)
+    {
+        llMessageLinked(BOAT_RECEIVER, selectedRange, message, "");
+    } else
+    {
+        llOwnerSay("\nERROR: \nThis is not a properly formated url or USB style waypoint.");
+    }
 }
 
 onRangeSet(string message)
 {
     switch(message)
     {
-        case (string)rangeMenuList[0]:
+        case (string)RANGE_MENU_LIST[0]:
             selectedRange = selectedRange + 10;
             llOwnerSay("GPS auto waypoint advance is set to " + (string)selectedRange);
-            // message linked waypoint & range
-            handleRangeMenu(userKey);
+            handleRangeMenu(USER_KEY);
             break;
-        case (string)rangeMenuList[1]:
+        case (string)RANGE_MENU_LIST[1]:
             selectedRange = selectedRange - 10;
             llOwnerSay("GPS auto waypoint advance is set to " + (string)selectedRange);
-            // message linked waypoint & range
-            handleRangeMenu(userKey);
+            handleRangeMenu(USER_KEY);
             break;
-        case (string)rangeMenuList[2]:
-            selectedRange = defaultRange;
+        case (string)RANGE_MENU_LIST[2]:
+            selectedRange = DEFAULT_RANGE;
             llOwnerSay("GPS auto waypoint advance is set to " + (string)selectedRange);
-            // message linked waypoint & range
-            handleRangeMenu(userKey);
+            handleRangeMenu(USER_KEY);
             break;
         default:
-            handleMainMenu(userKey, "main");
+            handleMainMenu(USER_KEY, "main");
             break;
     }
 }
@@ -154,7 +158,7 @@ getInventoryList()
     integer a;
     integer i = (llGetInventoryNumber(INVENTORY_NOTECARD) -1);
     if (i > 12) {
-        llOwnerSay("WARNING: \n Max notecards in inventory (12) has been reached. This feature will be disabled until fixed.");
+        llOwnerSay("\nERROR: \nMax notecards in inventory (12) has been reached. This feature will be disabled until fixed.");
         return;
     }
     if (i < 1)
@@ -182,16 +186,15 @@ toggleGPS()
         string name = llGetLinkName(i);
         if (name == "boatReceiver")
         {
-            if (!gpsState) {
-                gpsState = TRUE;
-                llOwnerSay("Flying Fizz 6m GPS on...");
-                mainMenu(userKey);
+            BOAT_RECEIVER = i;
+            if (!GPS_STATE) {
+                GPS_STATE = TRUE;
+                mainMenu(USER_KEY);
             }
             else 
             {
-                gpsState = FALSE;
-                llOwnerSay("Flying Fizz 6m GPS off...");
-                mainMenu(userKey);
+                GPS_STATE = FALSE;
+                mainMenu(USER_KEY);
             }
         }
     }
@@ -202,14 +205,13 @@ default
 {
     state_entry()
     {
-        llOwnerSay("Flying Fizz 6m GPS ready!");
         getInventoryList();
     }
 
     touch_start(integer number)
     {
-        userKey = llDetectedKey(0);
-        mainMenu(userKey);
+        USER_KEY = llDetectedKey(0);
+        mainMenu(USER_KEY);
     }
 
     listen(integer channel, string name, key id, string message)
@@ -229,11 +231,6 @@ default
                 handleMainMenu(id, message);
                 break;
         }
-    }
-
-    dataserver( key queryid, string data )
-    {
-        
     }
 
     timer()

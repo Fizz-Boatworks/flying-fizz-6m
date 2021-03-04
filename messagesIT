@@ -1,0 +1,55 @@
+La barca è sbloccata e può essere manovrata da chiunque
+La barca è bloccata e può essere manovrata solo dal proprietario
+Camera spostata di posizione
+Cambiato in modalità divertimento
+Cambiato in modalità novizio
+Cambiato in modalità competizione
+Cambiato in modalità esperto
+Impostato identificativo barca a
+Il timoniere controlla l'assetto (settaggio fine) della vela maestra
+Il Crew 1 controlla l'assetto della vela maestra
+Il Crew 2 controlla l'assetto della vela maestra
+Il Crew 3 controlla l'assetto della vela maestra
+
+Il timoniere controlla l'angolo del fiocco
+Il Crew 1 controlla l'angolo del fiocco
+Il Crew 2 controlla l'angolo del  fiocco
+Il Crew 3 controlla l'angolo del fiocco
+Il timoniere controlla l'assetto del fiocco
+Il Crew 1 controlla l'assetto del fiocco
+Il Crew 2 controlla l'assetto del fiocco
+Il Crew 3 controlla l'assetto del fiocco
+Il timoniere controlla il gennaker
+Il Crew 1 controlla il gennaker
+Il Crew 2 controlla il gennaker
+Il Crew 3 controlla il gennaker
+L'ultima versione ti verra' consegnata in breve tempo 
+La nuova versione verra' richiesta al Server Key
+La barca e' resa fantasma da
+La barca e' resa non fantasma da 
+Ormeggio registrato
+L'ormeggio e' possibile solo nella regione originale
+Posizione di ormeggio non ancora settata
+La vista Panoramica non puo' essere applicata tutte le volte, ed e' provvisoriamente disabilitata
+Applico texture dalla Notecard
+Non trovo Notecard
+Randa aperta in cima
+Randa piatta
+Randa media
+Randa grassa
+Fiocco aperto in cima
+Fiocco piatto
+Fiocco medio
+Fiocco grasso
+Abbassando gennaker...
+Alzando gennaker...
+Alzando gennaker 2...(non implementato nel flying fizz)
+Alzando gennaker 3...(non implementato nel flying fizz)
+Alzando gennaker 4...(non implementato nel flying fizz)
+Flying Fizz
+alza/abbassa = inizio/fine veleggiata
+su/giu cursori =regolazione vele
+shift-sinistro/shift-destro = controllo posizione equipaggio (interno/esterno barca, lato equipaggio
+pgup/pgdn = controllo dell'aspetto della vela
+il gennaker e' collassato
+Digita "gennaker" per issare o ammainare il gennaker
