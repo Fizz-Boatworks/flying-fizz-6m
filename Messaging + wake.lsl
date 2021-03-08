@@ -3,6 +3,7 @@ integer MSGTYPE_MODECHANGE=50001;
 integer VEHICLE_SAILING=1;
 integer MSGTYPE_CAPSIZED=50147;
 integer MSGTYPE_WWCWAVES=70502;
+integer MSGTYPE_SETTINGS=1000;
 
 integer MSGTYPE_SAY = 51000;
 integer MSGTYPE_WHISPER = 52000;
@@ -31,9 +32,18 @@ float    waveCycle=0.0;
 
 //messages
 string  notecard="Messages";
-key     settingsQueryID; //id used to identify dataserver queries reading notecard
+key     messagesQueryID; //id used to identify dataserver queries reading notecard
 list messagesQueue=[];
 integer wakeTime;
+
+//read settings notecard
+string  currentNoteCard="fizz_settings";
+integer settingsLine;        // current line number reading notecard
+key     settingsQueryID;             // id used to identify dataserver queries reading notecard
+list    notecardParams;
+integer comIndex;
+string sline;
+integer msgId;
 
 init() {
     list      nameList = llParseString2List(llGetObjectName(), [" M@"], []);
@@ -194,7 +204,12 @@ default
 
     link_message(integer sender_num, integer num, string str, key id)
     {
-        if(num == MSGTYPE_MODECHANGE) { 
+        if(str=="loadconf") {
+            llOwnerSay("Loading Configuration");
+            notecardParams=[];
+            settingsLine=0;
+            settingsQueryID = llGetNotecardLine(currentNoteCard, settingsLine);    // read line
+        } else if(num == MSGTYPE_MODECHANGE) { 
             wakezero();
             wakeTime=3;
             if((integer)str==VEHICLE_SAILING) llSetTimerEvent(1.0);
@@ -214,14 +229,14 @@ default
         if(num==MSGTYPE_SAYTO | num==MSGTYPE_WHISPER || num==MSGTYPE_SAY || num==MSGTYPE_SHOUT) {
             messagesQueue+=[num,(integer)str,(string)id];
             if(llGetListLength(messagesQueue)<=3) {
-                settingsQueryID=llGetNotecardLine(notecard, (integer)str);    // request line with the message
+                messagesQueryID=llGetNotecardLine(notecard, (integer)str);    // request line with the message
             }
         }
     }
     
     //messages
     dataserver(key query_id, string data) { 
-        if (query_id == settingsQueryID) {
+        if (query_id == messagesQueryID) {   //find message
             if (data != EOF) {
                 integer msgType=llList2Integer(messagesQueue,0);  //message type
                 string extramessage=llList2String(messagesQueue,2);  //keyid for SAYTO  extramessage for others
@@ -234,9 +249,32 @@ default
                 else if(msgType==MSGTYPE_SAY) llSay(0,data+" "+extramessage);
                 else if(msgType==MSGTYPE_SHOUT) llShout(0,data+" "+extramessage);
                 messagesQueue=llDeleteSubList(messagesQueue,0,2);
-                if(llGetListLength(messagesQueue)>=3) settingsQueryID=llGetNotecardLine(notecard, llList2Integer(messagesQueue,1));
+                if(llGetListLength(messagesQueue)>=3) messagesQueryID=llGetNotecardLine(notecard, llList2Integer(messagesQueue,1));
             } else {
                 messagesQueue=[];
+            }
+        } else if (query_id == settingsQueryID) {   //load settings
+            if (data != EOF) {
+                comIndex=llSubStringIndex(data,"//");
+                if(comIndex>0) sline=llGetSubString(data,0,comIndex-1);
+                else if(comIndex==0) sline="";
+                else sline=data;
+                sline=llStringTrim(sline,STRING_TRIM);
+                if(sline!=""){
+                    if(llGetSubString(sline,0,0)=="["){
+                        if(msgId>0 && llGetListLength(notecardParams)>0) llMessageLinked(LINK_SET, MSGTYPE_SETTINGS, (string)msgId, llList2CSV(notecardParams));
+                        notecardParams=[];
+                        msgId=(integer)llGetSubString(sline,1,2);
+                        if(msgId==0) llOwnerSay("Fizz Settings Error in line "+sline);
+                    }else{
+                        notecardParams+=llList2List(llCSV2List(data),0,-1);
+                    }
+                }
+                ++settingsLine;
+                settingsQueryID = llGetNotecardLine(currentNoteCard, settingsLine);    // request next line
+            }else{
+                if(msgId>0) llMessageLinked(LINK_SET, MSGTYPE_SETTINGS, (string)msgId, llList2CSV(notecardParams));
+                llOwnerSay("Configuration Loaded");
             }
         }
     }
