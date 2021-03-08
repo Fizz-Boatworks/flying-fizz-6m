@@ -1,6 +1,7 @@
 integer CREWID=1;    // change this for every crew member 0-Helm 1-Crew1 2-Crew2
 integer HudComChannel=-29000;
 integer HudChannel;
+integer ChatChannel;
 
 
 integer MSGTYPE_SETTINGS=1000;
@@ -35,7 +36,8 @@ integer mooredPose;
 string  currentAnimation;
 
 //operation variables
-integer listenHandle;
+integer swRun;  //0 not ready   1 ready
+integer listenHandle;  //handle listen ChatChannel
 integer sailingState=0;
 integer cameraMode;
 integer panoramaCam=0;
@@ -77,15 +79,20 @@ getLinkNums()
 
 sitCrew(key k)
 {
-    llOwnerSay("sitCrew");
+    if(!swRun){
+        llUnSit(k);
+        llRegionSayTo(k,0,"Flying Fizz is not ready");
+        return;
+    }
+        
     crewKey=k;
     llMessageLinked(LINK_SET, MSGTYPE_CREWSEATED+CREWID, "", crewKey);
     cameraMode=0;
     crewPose=0;
     mooredPose=0;
     currentAnimation="";
-    if(listenHandle) llListenRemove(listenHandle);
-    listenHandle=llListen(0,"",crewKey,"");
+    llListenRemove(listenHandle);
+    listenHandle=llListen(ChatChannel,"",crewKey,"");
     llRequestPermissions(crewKey, PERMISSION_TRIGGER_ANIMATION | PERMISSION_CONTROL_CAMERA);
     llMessageLinked(LINK_ROOT, MSGTYPE_SAYTO, "47", crewKey);  // show little help info
     llMessageLinked(LINK_ROOT, MSGTYPE_SAYTO, "48", crewKey);  // show little help info
@@ -255,6 +262,7 @@ notecardRead(integer msgId, string str) {
     else if(msgId==22) cameraParams=in;
     //llOwnerSay((string)msgId+"   "+(string)llGetListLength(in));
     if(msgId==22) llOwnerSay(llGetScriptName()+" ready ("+(string)llGetFreeMemory()+" free)");
+    swRun=1;
 }
 
 hike(integer mode)
@@ -284,7 +292,6 @@ default
 {
     state_entry()
     {
-        HudChannel= -3 -(integer)("0x" + llGetSubString( (string)llGetKey(), -7, -1) );
         init();
     }
     
@@ -313,8 +320,19 @@ default
     link_message(integer sender_num, integer num, string str, key id)
     {
         if(num==MSGTYPE_SETTINGS){   
-            if((integer)str>=18 && (integer)str<=23) notecardRead((integer)str,(string)id);
-        }else if(num==MSGTYPE_MODECHANGE) sailingState=(integer)str;
+            if(str=="hudchannel") HudChannel==(integer)((string)id);   //receive hud channel from Helmsman script
+            else if((integer)str>=18 && (integer)str<=23) notecardRead((integer)str,(string)id); //receive settings params from messages script
+        }else if(num==MSGTYPE_MODECHANGE){ 
+            sailingState=(integer)str;
+        }else if(num==MSGTYPE_SETTINGSCHANGE){ 
+            if(str=="chatchannel"){
+                if(crewKey){ 
+                    ChatChannel==(integer)((string)id);
+                    llListenRemove(listenHandle);
+                    listenHandle=llListen(ChatChannel,"",crewKey,"");
+                }
+            }
+        }
     }
     
     listen(integer channel, string name, key id, string msg) 
@@ -332,12 +350,3 @@ default
         }
     }    
 }
-
-
-
-
-
-
-
-
-

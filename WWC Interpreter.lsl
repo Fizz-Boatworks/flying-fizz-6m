@@ -6,8 +6,12 @@ integer MSGTYPE_WWCCURRENT=70503;
 integer MSGTYPE_WWCLOCALSCLEAR=70600;
 integer MSGTYPE_WWCLOCALS=70601;
 integer MSGTYPE_MOVEPRIM=756;
+integer MSGTYPE_SETTINGS=1000;
+
 integer    moverIndex=0;
 integer    moverScripts=5;
+
+integer HudChannel;
 
 float timerInterval=1.0;
 float reduceRate=0.2;
@@ -549,6 +553,8 @@ default
         } else if(num==MSGTYPE_WWCLOCALS) {
             list in = llCSV2List(str);
             if(llGetListLength(in)==9) wwcLocalFluctuations+=in;
+        } else if(num==MSGTYPE_SETTINGS) {   
+            if(str=="hudchannel") HudChannel==(integer)((string)id);   //receive hud channel from Helmsman script
         }
     }
 

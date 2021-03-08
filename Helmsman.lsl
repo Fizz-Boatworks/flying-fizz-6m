@@ -47,11 +47,18 @@ integer CREWID=0;    // change this for every crew member  0-Helm 1-Crew1 2-Crew
 //string secretScriptKey="JKLU97RW";
 //integer MSGTYPE_SCRIPTCHECK=54350;
 string boatName = "Flying Fizz";
-string versionName = "6.0a";
+string versionName = "6m";
 key serverKey = "587f987d-d3e8-cfa9-8ffb-dad16c4a6b6a";
 //string serverCode = "utf5ry3f7v9";
+//channels and handles
 integer HudComChannel=-29000;
 integer HudChannel;
+integer HudInChannel;
+integer ChatChannel;
+integer listenHandle;  //chat handle
+integer listenComHandle;  //common handle
+integer listenHudHandle;  //Hud handle
+
 
 // constants
 integer MSGTYPE_SETTINGS=1000;
@@ -86,6 +93,7 @@ list noseDiveAnimationList=[];
 list cameraParams=[];
 
 // operational variables
+integer swRun;  //0 not ready   1 ready
 integer sailingState=0;
 integer cameraMode=0;
 integer panoramaCam=0;
@@ -96,8 +104,9 @@ integer regionChanged=0;
 integer hasCapsized=0;
 integer heel=0;
 
+key     crew1Key=NULL_KEY;
+key     crew2Key=NULL_KEY;
 key     helmKey=NULL_KEY;
-integer listenHandle=0;
 integer helmPose=0; // <possible values: -2 (port trapeze), -1 (port hiking), 0 (none), 1 (sb hiking), 2 (sb trapeze)>
 integer mooredPose=0;
 string  currentAnimation="";
@@ -151,8 +160,11 @@ notecardRead(integer msgId, string str) {
     else if(msgId==3) capsizeAnimationList=in;
     else if(msgId==4) noseDiveAnimationList=in;
     else if(msgId==5) cameraParams=in;
-    //llOwnerSay((string)msgId+"   "+(string)llGetListLength(in));
-    if(msgId==5) llOwnerSay(llGetScriptName()+" ready ("+(string)llGetFreeMemory()+" free)");
+    if(msgId==5){   //load settings finish
+        llOwnerSay(llGetScriptName()+" ready ("+(string)llGetFreeMemory()+" free)");
+        swRun=1;
+        llMessageLinked(LINK_SET, MSGTYPE_SETTINGS,"hudchannel",(string)HudChannel); //Send the HUD channel to all scripts
+    }
 }
 
 setAnimation() {
@@ -432,6 +444,12 @@ setBoatID(string pid) {
 
 sitHelm(key k)
 {
+    if(!swRun){
+        llUnSit(k);
+        llRegionSayTo(k,0,"Flying Fizz is not ready");
+        return;
+    }
+    
     helmKey=k;
     cameraMode=0;
     llMessageLinked(LINK_SET, MSGTYPE_CREWSEATED+CREWID, "", helmKey);
@@ -443,12 +461,12 @@ sitHelm(key k)
     llRequestPermissions(helmKey, PERMISSION_TRIGGER_ANIMATION | PERMISSION_TAKE_CONTROLS | PERMISSION_CONTROL_CAMERA);
     // immediately make the boat physical
     setNewSailMode(VEHICLE_FLOATING);
-    if(listenHandle) llListenRemove(listenHandle);
-    listenHandle=llListen(0,"",helmKey,"");
+    llListenRemove(listenHandle);
+    listenHandle=llListen(ChatChannel,"",helmKey,"");
 //  getWindParams(); later er weer in als samengevoegd wordt
     llMessageLinked(LINK_THIS, MSGTYPE_SAYTO, "47", helmKey);  // show little help info
     llMessageLinked(LINK_THIS, MSGTYPE_SAYTO, "48", helmKey);  // show little help info
-    llWhisper(HudComChannel,"sit,"+(string)helmKey+","+(string)HudChannel);   //call hud
+    llWhisper(HudComChannel,"sit,"+(string)helmKey+","+(string)HudChannel);   //send hudchannel to hud
     llSetTimerEvent(1.0);
 }
 
@@ -460,7 +478,6 @@ unsitHelm()
             if(llStringLength(currentAnimation)>0) llStopAnimation(currentAnimation);
     //     llSetStatus(STATUS_PHANTOM,TRUE);  // to enable the crew member to get away from the boat and not be trapped between invisible prims
     llMessageLinked(LINK_THIS, MSGTYPE_CREWSEATED+CREWID, "", NULL_KEY);
-    helmKey = NULL_KEY;
     cameraMode=0;
     helmPose=0;
     mooredPose=0;
@@ -468,6 +485,7 @@ unsitHelm()
     llWhisper(HudComChannel,"unsit,"+(string)helmKey+","+(string)HudChannel);   //call hud
     setNewSailMode(VEHICLE_MOORED);
     llMessageLinked(LINK_THIS,MSGTYPE_MODECHANGE,(string)sailingState,NULL_KEY); // redo it as sometimes not all parts understood it the first time
+    helmKey = NULL_KEY;
 }
 
 hike(integer mode)
@@ -516,6 +534,12 @@ default
         }
         llSleep(0.1);
         HudChannel= -3 -(integer)("0x" + llGetSubString( (string)llGetKey(), -7, -1) );
+        HudInChannel=HudChannel-1;
+        ChatChannel=0;
+        llListenRemove(HudInChannel);
+        listenHudHandle=llListen(HudInChannel,"","","");
+        llListenRemove(HudComChannel);
+        listenComHandle=llListen(HudComChannel,"","","");
         init();
     }
 
@@ -622,6 +646,9 @@ default
             //hideBoatID();
         //} else if (num==MSGTYPE_SCRIPTCHECK) {
             //llMessageLinked(LINK_ROOT, MSGTYPE_SCRIPTCHECK+1, llSHA1String(secretScriptKey+str),NULL_KEY);
+        } else if(num==MSGTYPE_CREWSEATED+1 || num==MSGTYPE_CREWSEATED+2) {
+            if(num==MSGTYPE_CREWSEATED+1) crew1Key=id;
+            else crew2Key=id;
         }
     }
 
@@ -656,6 +683,18 @@ default
     }
     
     listen(integer channel, string name, key id, string msg){
+        if(channel==HudComChannel){
+            if(llGetSubString(msg,0,4)=="hello"){ 
+                key k=(key)llGetSubString(msg,6,41);
+                if(k){
+                    if(k==helmKey || k==crew1Key || k==crew2Key){
+                        llRegionSayTo(id,HudComChannel,"sit,"+(string)k+","+(string)HudChannel);   //send hudchannel to hud
+                    }
+                }
+            }
+            return;    
+        }
+
         if(msg=="hike+") hike(1);
         else if(msg=="hike-") hike(-1);
         else if(llGetSubString(msg,0,2)=="id " && sailingState!=VEHICLE_SAILING) setBoatID(llGetSubString(msg,3,-1));
@@ -712,6 +751,14 @@ default
         }else if(msg=="shout"){
             shoutOn=++shoutOn%2;
             llMessageLinked(LINK_ROOT, MSGTYPE_WHISPER+58+shoutOn, "", NULL_KEY); // shout relay on/off
+        }else if(llGetSubString(msg,0,6)=="channel "){
+            integer chan=(integer)llGetSubString(msg,7,-1);
+            if(chan>0){
+                ChatChannel=chan;
+                llMessageLinked(LINK_THIS, MSGTYPE_SETTINGSCHANGE, "chatchannel",(string)ChatChannel);
+                llListenRemove(listenHandle);
+                listenHandle=llListen(ChatChannel,"",helmKey,"");
+            }
         /*
         }if(msg=="camera"){
             cameraMode++;
