@@ -99,12 +99,12 @@ unsitCrew()
             if(llStringLength(currentAnimation)>0) llStopAnimation(currentAnimation);
             
     if(listenHandle) llListenRemove(listenHandle);
-    crewKey = NULL_KEY;
     llMessageLinked(LINK_SET, MSGTYPE_CREWSEATED+CREWID, "", crewKey);
     cameraMode=0;
     crewPose=0;
     mooredPose=0;
     llWhisper(HudComChannel,"unsit,"+(string)crewKey+","+(string)HudChannel);   //call hud
+    crewKey = NULL_KEY;
 }
 
 setCamera() {
