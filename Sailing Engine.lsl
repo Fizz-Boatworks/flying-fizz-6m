@@ -87,7 +87,7 @@ integer foresailLinkNum=0;
 integer gennakerLinkNum=0;
 integer boomLinkNum=0;
 integer mainsheetLinkNum=0;
-integer vangLinkNum=0;
+integer rudderLinkNum=0;  //only for test
 integer jibsheetLinkNum=0;
 integer gennakersheetLinkNum=0;
 
@@ -115,6 +115,7 @@ float   apparentWindSpeed;
 float   apparentWindSpeedX;
 integer apparentWindDir;
 integer absApparentWindDir;
+integer windType;
 
 // Variables propulsion
 integer isPlaning;
@@ -253,7 +254,7 @@ getLinkNums() {
         else if (str=="gennaker") gennakerLinkNum=i;
         else if (str=="boom") boomLinkNum=i;
         else if (str=="mainsheet") mainsheetLinkNum=i;
-        else if (str=="vang") vangLinkNum=i;
+        else if (str=="rudder") rudderLinkNum=i;
         else if (str=="jib sheet") jibsheetLinkNum=i;
         else if (str=="gennaker sheet") gennakersheetLinkNum=i;
     }
@@ -470,6 +471,7 @@ getWWCvariables() {
         currentX=0.0;
         currentY=0.0;
     }
+    //llSetLinkPrimitiveParamsFast(rudderLinkNum,[PRIM_TEXT, "AWA:"+(string)apparentWindDir+"   windspd:"+(string)apparentWindSpeed, <1,0,0>, 1.0]);
 }
 
 setSailMode(integer newMode) {
@@ -957,6 +959,7 @@ default
     state_entry()
     {
         init();
+        llSetLinkPrimitiveParamsFast(rudderLinkNum,[PRIM_TEXT, "", <1,0,0>, 0.0]);
     }
 
     link_message(integer sender_num, integer num, string str, key id)
@@ -1116,7 +1119,8 @@ default
                         //llMessageLinked(LINK_THIS, MSGTYPE_SETTINGSCHANGE,"genup","");
                     }
                 } 
-            }
+            }else if(str=="global") windType=0;   //wwc
+            else if(str=="mywind") windType=1;   //personal wind
         }
     }
 
@@ -1160,7 +1164,7 @@ default
         }
         
         steerEffect=0.0;
-        calcWaves();
+        if(!windType) calcWaves();
 
         if(sailingMode==VEHICLE_SAILING && hasCapsized<=0) {
             calcWindDrag();

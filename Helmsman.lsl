@@ -604,7 +604,7 @@ default
         }
         if(--regionChanged==0) {
 //            llOwnerSay("hrlm region changed");
-            llMessageLinked(LINK_THIS,MSGTYPE_MODECHANGE,(string)sailingState,NULL_KEY);
+            //llMessageLinked(LINK_THIS,MSGTYPE_MODECHANGE,(string)sailingState,NULL_KEY);
             currentAnimation="";
 //panoramaCam=1;
             //*if(llAvatarOnSitTarget()) llRequestPermissions(llAvatarOnSitTarget(), PERMISSION_TRIGGER_ANIMATION | PERMISSION_TAKE_CONTROLS | PERMISSION_CONTROL_CAMERA);
@@ -759,6 +759,17 @@ default
                 llListenRemove(listenHandle);
                 listenHandle=llListen(ChatChannel,"",helmKey,"");
             }
+        }else if(msg=="global" || msg=="global wind"){
+            llMessageLinked(LINK_THIS, MSGTYPE_SETTINGSCHANGE, "global","");
+        }else if(msg=="mywind" || msg=="my wind"){
+            llMessageLinked(LINK_THIS, MSGTYPE_SETTINGSCHANGE, "mywind","");
+        }else if(llGetSubString(msg,0,7)=="winddir "){
+            integer ndir=(integer)llGetSubString(msg,7,-1);
+            if(ndir<0 || ndir>359) ndir=0;
+            llMessageLinked(LINK_THIS, MSGTYPE_SETTINGSCHANGE, "winddir",(string)ndir);
+        }else if(llGetSubString(msg,0,9)=="windspeed "){
+            integer nspd=(integer)llGetSubString(msg,9,-1);
+            if(nspd>=5 && nspd<30) llMessageLinked(LINK_THIS, MSGTYPE_SETTINGSCHANGE, "windspd",(string)nspd);
         /*
         }if(msg=="camera"){
             cameraMode++;

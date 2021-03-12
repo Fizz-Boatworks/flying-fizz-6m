@@ -309,7 +309,7 @@ setGennaker(integer angle, integer setting) {
         //curGennakerSide = setSail(angle, curGennakerAngle, shape, curGennakerShape, gennakerParams, gennakerLinkNum, curGennakerSide,2,2);
         //curGennakerSide = setSail(angle, curGennakerAngle, gennakerLinkNum, curGennakerSide,2,2);
         if(angle!=curGennakerAngle) {
-            llOwnerSay("setGennaker("+(string)angle+", current: "+(string)curGennakerAngle+" visible:"+(string)curGennakerVisible);
+            //llOwnerSay("setGennaker("+(string)angle+", current: "+(string)curGennakerAngle+" visible:"+(string)curGennakerVisible);
             if(llAbs(angle)<genMinAngle) angle=genMinAngle*angle/llAbs(angle);
             else if(llAbs(angle)>genMaxAngle) angle=genMaxAngle*angle/llAbs(angle);
             llSetLinkPrimitiveParamsFast(gennakerLinkNum,[PRIM_ROT_LOCAL,llEuler2Rot(DEG_TO_RAD*<genRot.x,genRot.y,-angle>)]);  //put gen rotation

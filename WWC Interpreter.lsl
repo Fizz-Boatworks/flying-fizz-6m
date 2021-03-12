@@ -7,12 +7,17 @@ integer MSGTYPE_WWCLOCALSCLEAR=70600;
 integer MSGTYPE_WWCLOCALS=70601;
 integer MSGTYPE_MOVEPRIM=756;
 integer MSGTYPE_SETTINGS=1000;
+integer MSGTYPE_SETTINGSCHANGE=50003;
+
 
 integer    moverIndex=0;
 integer    moverScripts=5;
 
 integer HudChannel;
-
+integer windType;   //0 global wwc   1 mywind
+integer mywindDir=0;
+float mywindSpd=8.5;   //m/s
+  
 float timerInterval=1.0;
 float reduceRate=0.2;
 integer  sailArea=25;  /// may not be zero;
@@ -145,7 +150,7 @@ calcSpeedAndHeading() {
     compass=lslAngle2RealAngle((integer)(currEuler.z * RAD_TO_DEG)); // boat heading
     boatSpeed = llVecMag(spdVec);
     waterSpeed = boatSpeed;
-    if(wwcCrntSpeed!=0.0) {
+    if(wwcCrntSpeed!=0.0 && !windType) {
         vector  crnVec;
         float multiplier=1.0;
         float lslCrnDir=lslAngle2RealAngle(currentDir)*DEG_TO_RAD;
@@ -234,39 +239,47 @@ getLocalFluctuation(float posX, float posY) {
 }
 
 calcWind(float posX, float posY) {
-    float thetaTime;
-    float patternX;
-    float patternY;
-    float windMultiplier;
-    integer patternDirection = ((integer)wwcWndDir*-1)-90;  // convert wind compass angle to pattern direction in SL coordinate system
-    thetaTime=globalTime/1903*TWO_PI*wwcWndChangeRate;  // 31.67 minute cycle if wwcWndChangeRate=1.0
-
-    patternX=(float)((integer)(posX+(llCos(patternDirection*DEG_TO_RAD)*globalTime*wwcWndChangeRate))%600)/600.0;
-    patternX = patternX * (0.4 + (llSin(thetaTime)*0.8) + (llSin(thetaTime*1.5)*0.8)) * TWO_PI;
-    patternY=(float)((integer)(posY+(llSin(patternDirection*DEG_TO_RAD)*globalTime*wwcWndChangeRate))%600)/600.0;
-    patternY = patternY * (0.4 + (llSin(thetaTime)*0.8) + (llSin(thetaTime*1.9)*0.8)) * TWO_PI;
-    windMultiplier=(llSin(thetaTime)*llSin(thetaTime*2)*llSin(thetaTime*9)*0.3)+((llSin(patternX)+llSin(patternY))*0.5);
-    trueWindDir=(integer)(wwcWndDir+localWindDir);
-    trueWindDir=(integer)(trueWindDir+(wwcWndShifts * windMultiplier));
-    if(trueWindDir>=360) trueWindDir-=360;
-    if(trueWindDir<0) trueWindDir+=360;
-
-    // relative wind dir
-    relativeWindDir=compass-trueWindDir;
-    while(relativeWindDir>180) relativeWindDir-=360;
-    while(relativeWindDir<-180) relativeWindDir+=360;
-
-    // windspeed
-    patternX=(float)((integer)(posX+(llCos(patternDirection*DEG_TO_RAD)*globalTime*wwcWndChangeRate))%700)/700.0;
-    patternX = patternX * (0.4 + (llSin(thetaTime)*0.8) + (llSin(thetaTime*2.5)*0.8)) * TWO_PI;
-    patternY=(float)((integer)(posY+(llSin(patternDirection*DEG_TO_RAD)*globalTime*wwcWndChangeRate))%700)/700.0;
-    patternY = patternY * (0.4 + (llSin(thetaTime)*0.8) + (llSin(thetaTime*2.9)*0.8)) * TWO_PI;
-    windMultiplier=(llSin(thetaTime)*llSin(thetaTime*4)*llSin(thetaTime*10)*0.3)+((llSin(patternX)+llSin(patternY))*0.5);
-    trueWindSpeed=wwcWndSpeed*localWindSpeed;
-    trueWindSpeed=trueWindSpeed+(trueWindSpeed*wwcWndGusts*windMultiplier);
-    if (trueWindSpeed<0) trueWindSpeed=0;
-    if (trueWindSpeed>20.0) trueWindSpeed=20.0;
-//trueWindSpeed=8.0;
+    if (windType) {
+        trueWindDir=mywindDir;
+        relativeWindDir=compass-trueWindDir;
+        while(relativeWindDir>180) relativeWindDir-=360;
+        while(relativeWindDir<-180) relativeWindDir+=360;
+        trueWindSpeed=mywindSpd;
+    } else {
+        float thetaTime;
+        float patternX;
+        float patternY;
+        float windMultiplier;
+        integer patternDirection = ((integer)wwcWndDir*-1)-90;  // convert wind compass angle to pattern direction in SL coordinate system
+        thetaTime=globalTime/1903*TWO_PI*wwcWndChangeRate;  // 31.67 minute cycle if wwcWndChangeRate=1.0
+    
+        patternX=(float)((integer)(posX+(llCos(patternDirection*DEG_TO_RAD)*globalTime*wwcWndChangeRate))%600)/600.0;
+        patternX = patternX * (0.4 + (llSin(thetaTime)*0.8) + (llSin(thetaTime*1.5)*0.8)) * TWO_PI;
+        patternY=(float)((integer)(posY+(llSin(patternDirection*DEG_TO_RAD)*globalTime*wwcWndChangeRate))%600)/600.0;
+        patternY = patternY * (0.4 + (llSin(thetaTime)*0.8) + (llSin(thetaTime*1.9)*0.8)) * TWO_PI;
+        windMultiplier=(llSin(thetaTime)*llSin(thetaTime*2)*llSin(thetaTime*9)*0.3)+((llSin(patternX)+llSin(patternY))*0.5);
+        trueWindDir=(integer)(wwcWndDir+localWindDir);
+        trueWindDir=(integer)(trueWindDir+(wwcWndShifts * windMultiplier));
+        if(trueWindDir>=360) trueWindDir-=360;
+        if(trueWindDir<0) trueWindDir+=360;
+    
+        // relative wind dir
+        relativeWindDir=compass-trueWindDir;
+        while(relativeWindDir>180) relativeWindDir-=360;
+        while(relativeWindDir<-180) relativeWindDir+=360;
+    
+        // windspeed
+        patternX=(float)((integer)(posX+(llCos(patternDirection*DEG_TO_RAD)*globalTime*wwcWndChangeRate))%700)/700.0;
+        patternX = patternX * (0.4 + (llSin(thetaTime)*0.8) + (llSin(thetaTime*2.5)*0.8)) * TWO_PI;
+        patternY=(float)((integer)(posY+(llSin(patternDirection*DEG_TO_RAD)*globalTime*wwcWndChangeRate))%700)/700.0;
+        patternY = patternY * (0.4 + (llSin(thetaTime)*0.8) + (llSin(thetaTime*2.9)*0.8)) * TWO_PI;
+        windMultiplier=(llSin(thetaTime)*llSin(thetaTime*4)*llSin(thetaTime*10)*0.3)+((llSin(patternX)+llSin(patternY))*0.5);
+        trueWindSpeed=wwcWndSpeed*localWindSpeed;
+        trueWindSpeed=trueWindSpeed+(trueWindSpeed*wwcWndGusts*windMultiplier);
+        if (trueWindSpeed<0) trueWindSpeed=0;
+        if (trueWindSpeed>20.0) trueWindSpeed=20.0;
+        //trueWindSpeed=8.0;
+    }
 
     {
         integer i;
@@ -489,9 +502,9 @@ default
 
     link_message(integer sender_num, integer num, string str, key id)
     {
-//        llOwnerSay("link message:"+str);
+        //llOwnerSay("link message: num:"+(string)num+"   str:"+str+"   id:"+(string)id);
         if(num == msgTypeModeChange) {      // read setting params passed by control unit
-            llOwnerSay("wwwc interpreter msgtype change "+str);
+            //llOwnerSay("wwwc interpreter msgtype change "+str);
             sailingMode=(integer)str;
             if(btPosListenHandler) llListenRemove(btPosListenHandler);
             if(sailingMode!=vehicleMoored) {
@@ -554,11 +567,25 @@ default
             list in = llCSV2List(str);
             if(llGetListLength(in)==9) wwcLocalFluctuations+=in;
         } else if(num==MSGTYPE_SETTINGS) {   
-            if(str=="hudchannel") HudChannel==(integer)((string)id);   //receive hud channel from Helmsman script
+            if(str=="hudchannel") HudChannel=(integer)((string)id);   //receive hud channel from Helmsman script
+        } else if(num==MSGTYPE_SETTINGSCHANGE) {  //set global or personal wind and parameters
+            if(str=="global"){ 
+                windType=0;   //wwc
+                llOwnerSay("WWC wind ON");
+            }else if(str=="mywind"){ 
+                windType=1;   //personal wind
+                llOwnerSay("Personal wind ON");
+            }else if(str=="winddir"){ 
+                mywindDir=(integer)((string)id);
+                llOwnerSay("Wind Direction: "+(string)mywindDir+"º");
+            }else if(str=="windspd"){ 
+                mywindSpd=(float)((string)id)*0.514444;
+                llOwnerSay("Wind Speed: "+(string)llRound(mywindSpd*1.94384)+"kt.");
+            }
         }
     }
 
-    listen(integer channel, string name, key id, string msg) {
+    listen(integer channel, string name, key id, string msg) { 
         if (llGetSubString(msg,0,5)=="BtPos,") {
             calcWindShadow(llCSV2List(msg), id);
         }
@@ -570,8 +597,14 @@ default
         calcSpeedAndHeading();
         if(++counter%calcLocalsInterval==0) getLocalFluctuation(globalPos.x, globalPos.y);
         calcWind(globalPos.x, globalPos.y);
-        if(counter%calcCurrentInterval==0) calcCurrent(); 
-        calcWaveHeight();
+        if(!windType){ //wwc
+            if(counter%calcCurrentInterval==0) calcCurrent(); 
+            calcWaveHeight();
+        }else{
+            waveHeight=0;
+            currentSpeed=0;
+            currentDir=0;
+        }
         llSetObjectDesc(
             (string)compass+","+
             (string)((integer)(boatSpeed*10))+","+
@@ -582,6 +615,8 @@ default
             (string)((integer)(waveHeight*10))+","+
             (string)((integer)(currentSpeed*10))+","+
             (string)currentDir);
+            
+        if(HudChannel>0) llWhisper(HudChannel,(string)((integer)(boatSpeed*10))+","+(string)apparentWindDir+","+(string)((integer)(apparentWindSpeed*10))+","+(string)globalPos+","+(string)globalTime);
 
         if(sailingMode==vehicleSailing && llFabs((float)apparentWindDir)>20) {
             if(++sendBtPosCounter>(sendBtPosInterval+(llGetListLength(shadowingBoats)/4))) {
